@@ -121,11 +121,19 @@
 
 %%
 
-   moveseq: NUM '.' move move	     { }
-	| moveseq NUM '.' move move  { }
+   input: dangling_halfmove			{ }
+	| moveseq				{ }
+	| moveseq dangling_halfmove		{ }
 	;
 
-   move: MOVE			{ pgn_game->make_move( *$1 ); }
+   moveseq: NUM '.' move move			{ }
+	| moveseq NUM '.' move move		{ }
+	;
+
+   dangling_halfmove: NUM '.' move		{ }
+	;
+
+   move: MOVE				{ pgn_game->make_move( *$1 ); }
 	;
 
 %%
