@@ -20,7 +20,12 @@ ChessGame::ChessGame() {
 
 ChessGame::ChessGame( const char *pgn ) {
   ChessGame();
-  do_pgn_parse( pgn, this );
+  try {
+    do_pgn_parse( pgn, this );
+  }
+  catch ( ChessMove::Exception cme ) {
+    throw cme;
+  }
 }
 
 ChessGame::ChessGame( const ChessPosition &pos ):
@@ -91,7 +96,9 @@ void ChessGame::make_move( const ChessMove &move ) {
   // another piece)
   if ( piece.get_type() == ChessPiece::Pawn
        && move.get_promote() != ChessPiece::Empty )
-    position.set_piece_at( end_x, end_y, move.get_promote() );
+    position.set_piece_at( end_x, end_y,
+			   ChessPiece( move.get_promote(),
+				       piece.get_color() ) );
 
   // Set new en passant, castling info
   position.set_en_passant( move.get_en_passant_x(),
