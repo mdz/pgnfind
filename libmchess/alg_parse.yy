@@ -43,11 +43,22 @@
 %type <num> rank file maybe_capture
 %type <piece> piece maybe_promote
 %type <square> square
-%type <move> input move_check move
+%type <move> input init move_check move
 
 %%
 
-   input: move_check	{ $$ = $1; move_data = $1; }
+   input: init move_check { move_data = $1; move_data = $2; }
+	;
+
+   init: /* empty */	{ $$.piece = ChessPiece::Empty;
+			  $$.clarifier.rank = 0;
+			  $$.clarifier.file = 0;
+			  $$.square.rank = 0;
+			  $$.square.file = 0;
+			  $$.capture = 0;
+			  $$.check = 0;
+			  $$.promote = ChessPiece::Empty;
+			  $$.castling = ChessPosition::None; }
 	;
 
    move_check: move	{ $$ = $1; }
@@ -55,28 +66,22 @@
 	;
 
    move: piece 'x' square	        { $$.piece = $1;
-					  $$.clarifier = clar_none;
 					  $$.capture = 1;
 					  $$.square = $3; }
 	| piece square			{ $$.piece = $1;
-					  $$.clarifier = clar_none;
-					  $$.capture = 0;
 					  $$.square = $2; }
 
 	| piece file maybe_capture square { $$.piece = $1;
 					    $$.capture = $2;
 					    $$.clarifier.file =  $3;
-					    $$.clarifier.rank = 0;
 					    $$.square = $4; }
 
 	| piece rank maybe_capture square { $$.piece = $1;
 					    $$.capture = $2;
-					    $$.clarifier.file =  0;
 					    $$.clarifier.rank = $3;
 					    $$.square = $4; }
 
 	| square maybe_promote		{ $$.piece = ChessPiece::Pawn;
-					  $$.capture = 0;
 					  $$.square = $1;
 					  $$.promote = $2; }
 
@@ -85,6 +90,14 @@
 					  $$.capture = 1;
 					  $$.square = $3;
 					  $$.promote = $4; }
+
+	| 'O' '-' 'O'			{ $$.piece = ChessPiece::King;
+					  $$.castling =
+						ChessPosition::Kingside; }
+
+	| 'O' '-' 'O' '-' 'O'		{ $$.piece = ChessPiece::King;
+					  $$.castling =
+						ChessPosition::Queenside; }
 					  
 	;
 
