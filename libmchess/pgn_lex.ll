@@ -99,7 +99,7 @@
 ws [ \t\n]
 digit [0-9]
 number {digit}+
-alg_move [NBRQKa-hO][0-9a-hx+O-]+
+alg_move [NBRQKa-hO][^ \t\n]+
 other .
 
 %%
