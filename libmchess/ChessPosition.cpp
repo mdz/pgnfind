@@ -391,9 +391,9 @@ void ChessPosition::increment_move() {
 
   switch ( active_color ) {
   case White:
-    active_color = Black;
+    active_color = Black;break;
   case Black:
-    active_color = White;
+    active_color = White;break;
   default:
     assert(0);
   }
