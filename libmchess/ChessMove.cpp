@@ -276,11 +276,13 @@ void ChessMove::find_piece( const ChessPosition &pos,
   int x, y, vec;
   int found = 0;
   for ( vec = 0 ; vec < num_vectors ; ++vec ) {
-    for ( x = end_x + vectors[ vec ].x,
-	    y = end_y + vectors[ vec ].y ;
-	  x >= 1 && x <= 8 && y >= 1 && y <= 8 ;
-	  x += vectors[ vec ].x,
-	    y += vectors[ vec ].y ) {
+    for ( x = end_x + vectors[ vec ].x,    // Start one square away from
+	    y = end_y + vectors[ vec ].y ; // the end square
+
+	  x >= 1 && x <= 8 && y >= 1 && y <= 8 ; // Stay on the board
+
+	  x += vectors[ vec ].x,           // Move in the direction of
+	    y += vectors[ vec ].y ) {      // the current vector
 
       // It's rather inefficient to check the clarifier this way, but
       // they're relatively rare in practice

@@ -34,6 +34,7 @@ public:
   // Accessors
   //
 public:
+  // These are guaranteed to return values in the range [1,8]
   int get_start_x();
   int get_start_y();
   int get_end_x();
