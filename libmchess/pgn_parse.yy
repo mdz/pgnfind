@@ -10,6 +10,7 @@
 
 #include "ChessGame.h"
 #include "alg_parse_int.h"
+#include "pgn_lex_int.h"
 
 #define PGN_MAX_LENGTH 2048
 
@@ -99,13 +100,10 @@
 #define YYERROR_VERBOSE
 #define YYDEBUG 1
 
-  static int pgn_index;
-  static int pgn_strlen;
-  static char pgn_data[ PGN_MAX_LENGTH ];
   static char *err_msg;
-  static ChessGame *game;
+  ChessGame *pgn_game; // for pgn_lex
 
-  static int yyerror(char *);
+  int yyerror(char *);
 
 
 %}
@@ -119,11 +117,15 @@
 %token <move> MOVE
 
 %type <game> moveseq
+%type <move> move
 
 %%
 
-   moveseq: NUM MOVE MOVE	{ }
-	| moveseq NUM MOVE MOVE
+   moveseq: NUM '.' move move	     { }
+	| moveseq NUM '.' move move  { }
+	;
+
+   move: MOVE			{ pgn_game->make_move( *$1 ); }
 	;
 
 %%
@@ -133,13 +135,12 @@ int yyerror( char *s ) {
   return 1;
 }
 
-int pgn_parse( const char *_pgn_data, ChessGame *_game ) {
-  game = _game;
-  pgn_strlen = strlen( pgn_data );
-  strncpy( pgn_data, _pgn_data, pgn_strlen );
-  pgn_index = 0;
-
+int do_pgn_parse( const char *pgn_data, ChessGame *_game ) {
+  pgn_game = _game;
   //yydebug = 1;
+
+  // Feed the pgn string into the lexer
+  init_pgn_lex( pgn_data );
 
   return yyparse();
 }
