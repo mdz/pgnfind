@@ -5,6 +5,12 @@
 #include <stdlib.h>
 
 #include "ChessGame.h"
+#include "alg_parse.h"
+
+struct boardvec {
+  int x;
+  int y;
+};
 
 class ChessMove {
   //
@@ -32,6 +38,18 @@ public:
   int get_start_y();
   int get_end_x();
   int get_end_y();
+
+  //
+  // Protected methods
+  //
+protected:
+  void find_piece( const ChessPosition &pos,
+		   const struct boardvec *vectors,
+		   int num_vectors,
+		   ChessPiece::Type piece_type,
+		   ChessPiece::Color color,
+		   const Sclarifier &clarifier );
+
 
   //
   // Protected data

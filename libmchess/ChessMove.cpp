@@ -1,3 +1,7 @@
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #ifdef HAVE_ASSERT_H
 #include <assert.h>
 #else
@@ -7,16 +11,22 @@
 #include <iostream.h>
 
 #include "ChessMove.h"
-#include "alg_parse.h"
 
 // For searching diagonals
-static struct {
-  int x;
-  int y;
-} vectors[4] = { { 1, 1 },
-		 { -1, 1 },
-		 { 1, -1 },
-		 { -1, -1 } };
+static const struct boardvec vectors[] = {
+  // Diagonals
+  { 1, 1 },
+  { -1, 1 },
+  { 1, -1 },
+  { -1, -1 },
+  // Horizontals and verticals
+  { 1, 0 },
+  { -1, 0 },
+  { 0, 1 },
+  { 0, -1 } };
+
+static const struct boardvec *diagonal_vectors = &vectors[0];
+static const struct boardvec *hv_vectors = &vectors[4];
 
 ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 		      const ChessGame *game ) {
@@ -86,7 +96,7 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
     ChessPosition::Color pos_color =
       game->current_position().get_active_color();
 
-    assert( color == ChessPosition::White || color == ChessPosition::Black );
+    assert( pos_color == ChessPosition::White || pos_color == ChessPosition::Black );
 
     ChessPiece::Color piece_color =
       ( pos_color == ChessPosition::White )
@@ -100,6 +110,7 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 	 piece.get_color() == piece_color )
       throw InvalidMove;
     
+    int vec, x, y;
     int found = 0;
     switch ( piece_type ) {
     case ChessPiece::Pawn:
@@ -179,37 +190,65 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
       break;
 
     case ChessPiece::Bishop:
-      int vec;
-      int x, y;
-      
-      found = 0;
-      for ( vec = 0 ; vec < 4 ; ++vec ) {
-	for ( x = end_x + vectors[ vec ].x, y = end_y + vectors[ vec ].y ;
-	      x >= 1 && x <= 8 && y >= 1 && y <= 8 ;
-	      x += vectors[vec].x, y += vectors[vec].y ) {
-	  cout << "Looking for a bishop on (" << x << ',' << y << ')'
-	       << endl;
-	  ChessPiece piece = game->current_position().get_piece_at( x, y );
-	  if ( piece.get_type() != ChessPiece::Empty ) {
-	    if ( piece == ChessPiece( ChessPiece::Bishop ) ) {
-	      
-	      if ( found ) // Ambiguous
-		throw InvalidMove;
-	      
-	      start_x = x;
-	      start_y = y;
-	      found = 1;
-	      
-	    }
+      find_piece( game->current_position(),
+		  diagonal_vectors, 4,
+		  ChessPiece::Bishop,
+		  piece_color,
+		  move->clarifier );
+      break;
 
+    case ChessPiece::Rook:
+      find_piece( game->current_position(),
+		  hv_vectors, 4,
+		  ChessPiece::Rook,
+		  piece_color,
+		  move->clarifier );
+      break;
+
+    case ChessPiece::Queen:
+      find_piece( game->current_position(),
+		  vectors, 8,
+		  ChessPiece::Queen,
+		  piece_color,
+		  move->clarifier );
+      break;
+
+    case ChessPiece::King:
+      // Build a table of possible start squares
+      // We enclose this in a block so that its scope is limited
+      // to this case...otherwise, the compiler might get upset
+      if (1) {
+	struct {
+	  int x;
+	  int y;
+	} starts[8] = { { end_x, end_y - 1 },
+			{ end_x, end_y + 1 },
+			{ end_x + 1, end_y },
+			{ end_x + 1, end_y + 1 },
+			{ end_x + 1, end_y - 1 },
+			{ end_x - 1, end_y + 1 },
+			{ end_x - 1, end_y - 1 },
+			{ end_x - 1, end_y } };
+
+	// Look for a king on each of them
+	for ( int i = 0 ; i < 8 ; ++i ) {
+	  if (starts[i].x >= 1 && starts[i].x <= 8 && // is on the board
+	      starts[i].y >= 1 && starts[i].y <= 8 &&
+	      game->current_position().get_piece_at( starts[i].x,
+						     starts[i].y )
+	      == ChessPiece( ChessPiece::King, piece_color ) ) {
+
+	    start_x = starts[i].x;
+	    start_y = starts[i].y;
+	    found = 1;
 	    break;
 	  }
 	}
+
+	if (!found)
+	  throw InvalidMove;
       }
-      
-      if (!found)
-	throw InvalidMove;
-      
+					    
       break;
     default:
       // Should never happen, since we checked this case above
@@ -223,4 +262,53 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
     // This isn't here yet
     throw InvalidMove;
   }
+}
+
+// Search for a piece along the specified vectors from the end square,
+// to see if it could have moved there.  If none is found, or more
+// than one, throw InvalidMove
+void ChessMove::find_piece( const ChessPosition &pos,
+			    const struct boardvec *vectors,
+			    int num_vectors,
+			    ChessPiece::Type piece_type,
+			    ChessPiece::Color color,
+			    const Sclarifier &clarifier ) {
+  int x, y, vec;
+  int found = 0;
+  for ( vec = 0 ; vec < num_vectors ; ++vec ) {
+    for ( x = end_x + vectors[ vec ].x,
+	    y = end_y + vectors[ vec ].y ;
+	  x >= 1 && x <= 8 && y >= 1 && y <= 8 ;
+	  x += vectors[ vec ].x,
+	    y += vectors[ vec ].y ) {
+
+      // It's rather inefficient to check the clarifier this way, but
+      // they're relatively rare in practice
+      if ( clarifier.file && clarifier.file != x )
+	continue;
+      if ( clarifier.rank && clarifier.rank != y )
+	continue;
+
+      cout << "Looking for a piece on (" << x << ',' << y << ')'
+	   << endl;
+      ChessPiece piece = pos.get_piece_at( x, y );
+      if ( piece.get_type() != ChessPiece::Empty ) {
+	if ( piece == ChessPiece( piece_type, color ) ) {
+	      
+	  if ( found ) // Ambiguous
+	    throw InvalidMove;
+	      
+	  start_x = x;
+	  start_y = y;
+	  found = 1;
+	      
+	}
+	    
+	break;
+      }
+    }
+  }
+
+  if (!found)
+    throw InvalidMove;
 }
