@@ -56,18 +56,18 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
     if (!move)
       throw InvalidMove;
 
-    cout << "Parsed move:" << endl
-	 << "piece: " << move->piece << endl
-	 << "clarifier.rank: " << move->clarifier.rank << endl
-	 << "clarifier.file: " << move->clarifier.file << endl
-	 << "square.rank: " << move->square.rank << endl
-	 << "square.file: " << move->square.file << endl
-	 << "capture: " << move->capture << endl
-	 << "check: " << move->check << endl
-	 << "promote: " << move->promote << endl
-	 << "castling: " << move->castling << endl
-	 << endl
-	 << "Deduced: " << endl;
+//      cout << "Parsed move:" << endl
+//  	 << "piece: " << move->piece << endl
+//  	 << "clarifier.rank: " << move->clarifier.rank << endl
+//  	 << "clarifier.file: " << move->clarifier.file << endl
+//  	 << "square.rank: " << move->square.rank << endl
+//  	 << "square.file: " << move->square.file << endl
+//  	 << "capture: " << move->capture << endl
+//  	 << "check: " << move->check << endl
+//  	 << "promote: " << move->promote << endl
+//  	 << "castling: " << move->castling << endl
+//  	 << endl
+//  	 << "Deduced: " << endl;
       
     ChessPiece::Type piece_type = move->piece;
     ChessPiece piece;
