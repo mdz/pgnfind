@@ -1,6 +1,3 @@
-CXXFLAGS += -fhandle-exceptions
-YACC += -d
-
 noinst_LIBRARIES = libmchess.a
 
 libmchess_a_SOURCES = ChessPiece.cpp ChessPiece.h \
