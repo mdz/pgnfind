@@ -18,6 +18,9 @@ public:
   // Read PGN data
   ChessGame( const char *pgn );
 
+  // Start from a position
+  ChessGame( const ChessPosition & );
+
   //
   // Accessors
   //
