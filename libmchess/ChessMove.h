@@ -40,6 +40,13 @@ public:
   int get_end_x() const   { return end_x; };
   int get_end_y() const   { return end_y; };
 
+  // Returns the piece to promote to, for pawn moves
+  ChessPiece::Type get_promote() const { return promote; };
+
+  // Returns the type of castling done on the CURRENT move
+  // (only valid if the king is being moved)
+  ChessPosition::Castling get_castling_move() const { return castling_move; };
+
   // These will return values suitable for
   // ChessPosition::set_en_passant indicating the en passant capture
   // square AFTER this move is made
@@ -74,6 +81,12 @@ protected:
   int start_y;
   int end_x;
   int end_y;
+
+  // Promoted piece, for pawn moves
+  ChessPiece::Type promote;
+
+  // Castling type, for king moves
+  ChessPosition::Castling castling_move;
 
   // En passant capture square AFTER this move is made
   int en_passant_x;

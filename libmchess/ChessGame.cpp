@@ -63,25 +63,28 @@ void ChessGame::make_move( const ChessMove &move ) {
   }
 			   
   // Handle castling (move the rook)
-  if ( piece.get_type() == ChessPiece::King
-       && start_x == 5
-       && ( start_y == 1 || start_y == 8 )
-       && ( end_y == 1 || end_y == 8 )
-       && ( end_x == 7 || end_x == 2 ) ) {
+  if ( piece.get_type() == ChessPiece::King ) {
     int old_rook_square, new_rook_square;
-    if ( end_x == 7 ) {
+
+    switch ( move.get_castling_move() ) {
+    case ChessPosition::Kingside:
       old_rook_square = 8;
       new_rook_square = 6;
-    } else { // end_x == 2
+      break;
+    case ChessPosition::Queenside:
       old_rook_square = 1;
-      new_rook_square = 3;
+      new_rook_square = 4;
+      break;
+    default:
+      old_rook_square = new_rook_square = 0;
     }
-    int y = move.get_end_y();
 
-    position.set_piece_at( new_rook_square, end_y,
-			   position.get_piece_at( old_rook_square, end_y ) );
-    position.set_piece_at( old_rook_square, end_y,
-			   ChessPiece( ChessPiece::Empty ) );
+    if ( old_rook_square ) {
+      position.set_piece_at( new_rook_square, end_y,
+			     position.get_piece_at( old_rook_square, end_y ) );
+      position.set_piece_at( old_rook_square, end_y,
+			     ChessPiece( ChessPiece::Empty ) );
+    }
   }
 
   // Handle pawn promotion (change the recently placed pawn into
