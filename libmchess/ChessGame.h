@@ -27,6 +27,11 @@ public:
   const ChessPosition &current_position() const;
 
   //
+  // Mutators
+  //
+  void make_move( const class ChessMove & );
+
+  //
   // Protected data
   //
 protected:
