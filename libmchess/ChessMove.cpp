@@ -12,7 +12,7 @@
 
 #include "ChessMove.h"
 
-// For searching diagonals
+// For searching
 static const struct boardvec vectors[] = {
   // Diagonals
   { 1, 1 },
@@ -122,7 +122,7 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
       piece = game->current_position().get_piece_at( end_x, end_y );
       if ( piece.get_type() != ChessPiece::Empty &&
 	   piece.get_color() == piece_color )
-	throw InvalidMove;
+	throw IllegalMove;
     }
 
     // Reset the halfmove clock for captures
@@ -251,6 +251,15 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
       break;
 
     case ChessPiece::Rook:
+      // Disallow castling, where appropriate
+      if ( start_x == 1 ) {
+	castling = (ChessPosition::Castling)
+	  ( castling & ~(ChessPosition::Queenside) );
+      } else if ( start_x == 8 ) {
+	castling = (ChessPosition::Castling)
+	  ( castling & ~(ChessPosition::Kingside) );
+      }
+
       find_piece( game->current_position(),
 		  hv_vectors, 4,
 		  ChessPiece::Rook,
@@ -267,7 +276,11 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
       break;
 
     case ChessPiece::King:
+      // Assume we're not castling (until we find otherwise)
       castling_move = ChessPosition::None;
+
+      // She definitely won't be able to castle after this move
+      castling = ChessPosition::None;
 
       if ( move->castling ) {
 	int back_rank = ( pos_color == ChessPosition::White ? 1 : 8 );
@@ -297,16 +310,16 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 	  assert(0);
 	}
 
-	cout << "Castling: " << endl
-	     << "king_square.x: " << king_square.x << endl
-	     << "king_square.y: " << king_square.y << endl
-	     << "rook_square.x: " << rook_square.x << endl
-	     << "rook_square.y: " << rook_square.y << endl
-	     << "int_squares[0].x" << int_squares[0].x << endl
-	     << "int_squares[0].y" << int_squares[0].y << endl
-	     << "int_squares[1].x" << int_squares[1].x << endl
-	     << "int_squares[1].y" << int_squares[1].y << endl
-	     << endl;
+//  	cout << "Castling: " << endl
+//  	     << "king_square.x: " << king_square.x << endl
+//  	     << "king_square.y: " << king_square.y << endl
+//  	     << "rook_square.x: " << rook_square.x << endl
+//  	     << "rook_square.y: " << rook_square.y << endl
+//  	     << "int_squares[0].x" << int_squares[0].x << endl
+//  	     << "int_squares[0].y" << int_squares[0].y << endl
+//  	     << "int_squares[1].x" << int_squares[1].x << endl
+//  	     << "int_squares[1].y" << int_squares[1].y << endl
+//  	     << endl;
 	  
 	
 	if ( game->current_position().get_piece_at( king_square.x,
@@ -330,10 +343,11 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 	  end_x = int_squares[1].x;
 	  end_y = int_squares[1].y;
 	  
+	  // This is a castling move
 	  castling_move = move->castling;
 
 	} else {
-	  throw InvalidMove;
+	  throw IllegalMove;
 	}
 
       } else {
@@ -367,7 +381,7 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 	if (!found)
 	  throw InvalidMove;
       }
-
+      
       break;
     default:
       // Should never happen, since we checked this case above
