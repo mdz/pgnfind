@@ -98,7 +98,7 @@
    maybe_capture: 'x' { $$ = 1; }
 	| /* empty */ { $$ = 0; }
 
-   square: file rank	{ $$.rank = $1; $$.file = $2; }
+   square: file rank	{ $$.file = $1; $$.rank = $2; }
 
    maybe_promote: /* empty */ { $$ = ChessPiece::Empty; }
 	| '=' piece	      { $$ = $2; };
@@ -143,10 +143,9 @@ struct Schessmove *alg_parse( const char *_move_str ) {
   move_str[ MAX_MOVE_LEN ] = '\0';
   move_index = 0;
 
-  yydebug = 1;
+  //yydebug = 1;
 
   if ( yyparse() == 0 ) {
-    printf("alg_parse: yyparse() successful\n");
     return &move_data;
   } else {
     return NULL;
