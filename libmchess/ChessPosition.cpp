@@ -383,3 +383,9 @@ int ChessPosition::square_y( const char *square ) {
   assert( rank >= '1' && rank <= '8' );
   return rank - '1' + 1;
 }
+
+void ChessPosition::increment_move() {
+  ++halfmove_clock;
+  if ( halfmove_clock % 2 == 0 )
+    ++fullmove_number;
+}

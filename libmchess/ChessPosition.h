@@ -88,6 +88,10 @@ public:
   // Set the fullmove number
   void set_fullmove_number( int );
 
+  // Increment the halfmove clock, and (if appropriate) the fullmove
+  // number
+  void increment_move();
+
   // Read a FEN from an in-memory buffer Returns 1 if successful, 0 if
   // the buffer does not contain a valid FEN
   int read_FEN( const char *buf );
