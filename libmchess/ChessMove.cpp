@@ -263,16 +263,16 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 	  assert(0);
 	}
 
-	cout << "Castling: " << endl
-	     << "king_square.x: " << king_square.x << endl
-	     << "king_square.y: " << king_square.y << endl
-	     << "rook_square.x: " << rook_square.x << endl
-	     << "rook_square.y: " << rook_square.y << endl
-	     << "int_squares[0].x" << int_squares[0].x << endl
-	     << "int_squares[0].y" << int_squares[0].y << endl
-	     << "int_squares[1].x" << int_squares[1].x << endl
-	     << "int_squares[1].y" << int_squares[1].y << endl
-	     << endl;
+//  	cout << "Castling: " << endl
+//  	     << "king_square.x: " << king_square.x << endl
+//  	     << "king_square.y: " << king_square.y << endl
+//  	     << "rook_square.x: " << rook_square.x << endl
+//  	     << "rook_square.y: " << rook_square.y << endl
+//  	     << "int_squares[0].x" << int_squares[0].x << endl
+//  	     << "int_squares[0].y" << int_squares[0].y << endl
+//  	     << "int_squares[1].x" << int_squares[1].x << endl
+//  	     << "int_squares[1].y" << int_squares[1].y << endl
+//  	     << endl;
 	  
 	
 	if ( game->current_position().get_piece_at( king_square.x,
@@ -337,8 +337,8 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
       assert(0);
     }
     
-    cout << "start_x: " << start_x << endl;
-    cout << "start_y: " << start_y << endl;
+//      cout << "start_x: " << start_x << endl;
+//      cout << "start_y: " << start_y << endl;
 
   } else { // Descriptive notation
     // This isn't here yet
@@ -373,8 +373,8 @@ void ChessMove::find_piece( const ChessPosition &pos,
       if ( clarifier.rank && clarifier.rank != y )
 	continue;
 
-      cout << "Looking for a piece on (" << x << ',' << y << ')'
-	   << endl;
+//        cout << "Looking for a piece on (" << x << ',' << y << ')'
+//  	   << endl;
       ChessPiece piece = pos.get_piece_at( x, y );
       if ( piece.get_type() != ChessPiece::Empty ) {
 	if ( piece == ChessPiece( piece_type, color ) ) {
