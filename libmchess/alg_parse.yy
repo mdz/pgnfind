@@ -104,7 +104,6 @@
   
   static int move_index;
   static char move_str[MAX_MOVE_LEN + 1] = "";
-  static struct Sclarifier clar_none = { 0,0 };
   static struct Schessmove move_data;
   static char *err_msg;
 
