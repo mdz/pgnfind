@@ -9,12 +9,21 @@
 #include "ChessMove.h"
 #include "alg_parse.h"
 
+// For searching diagonals
+static struct {
+  int x;
+  int y;
+} vectors[4] = { { 1, 1 },
+		 { -1, 1 },
+		 { 1, -1 },
+		 { -1, -1 } };
+
 ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 		      const ChessGame *game ) {
   assert( format == Algebraic || format == Descriptive );
 
   if ( format == Algebraic ) {
-    //assert( game != NULL ); // Programmatic error
+    assert( game != NULL ); // Programmatic error
 
     if ( strlen( data ) < 2 ) // User error
       throw InvalidMove;
@@ -84,12 +93,14 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
       ? ChessPiece::White
       : ChessPiece::Black;
 
-    // Make sure we're not trying to capture our own piece
+    // Make sure we're not trying to capture our own piece, or make a
+    // null move
     piece = game->current_position().get_piece_at( end_x, end_y );
     if ( piece.get_type() != ChessPiece::Empty &&
 	 piece.get_color() == piece_color )
       throw InvalidMove;
     
+    int found = 0;
     switch ( piece_type ) {
     case ChessPiece::Pawn:
       int dir, second_rank;
@@ -141,8 +152,7 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 			{ end_x - 2, end_y + 1 },
 			{ end_x - 1, end_y - 2 },
 			{ end_x - 2, end_y - 1 } };
-	int found = 0;
-	
+
 	// Look for a knight on each of them
 	for ( int i = 0 ; i < 8 ; ++i ) {
 	  if (starts[i].x >= 1 && starts[i].x <= 8 && // is on the board
@@ -154,6 +164,8 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 	      game->current_position().get_piece_at( starts[i].x,
 						     starts[i].y )
 	      == ChessPiece( ChessPiece::Knight, piece_color ) ) {
+	    if ( found ) // ambiguous
+	      throw InvalidMove;
 	    start_x = starts[i].x;
 	    start_y = starts[i].y;
 	    found = 1;
@@ -167,6 +179,36 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
       break;
 
     case ChessPiece::Bishop:
+      int vec;
+      int x, y;
+      
+      found = 0;
+      for ( vec = 0 ; vec < 4 ; ++vec ) {
+	for ( x = end_x + vectors[ vec ].x, y = end_y + vectors[ vec ].y ;
+	      x >= 1 && x <= 8 && y >= 1 && y <= 8 ;
+	      x += vectors[vec].x, y += vectors[vec].y ) {
+	  cout << "Looking for a bishop on (" << x << ',' << y << ')'
+	       << endl;
+	  ChessPiece piece = game->current_position().get_piece_at( x, y );
+	  if ( piece.get_type() != ChessPiece::Empty ) {
+	    if ( piece == ChessPiece( ChessPiece::Bishop ) ) {
+	      
+	      if ( found ) // Ambiguous
+		throw InvalidMove;
+	      
+	      start_x = x;
+	      start_y = y;
+	      found = 1;
+	      
+	    }
+
+	    break;
+	  }
+	}
+      }
+      
+      if (!found)
+	throw InvalidMove;
       
       break;
     default:
