@@ -399,3 +399,66 @@ void ChessPosition::increment_move() {
     assert(0);
   }
 }
+
+int ChessPosition::find_piece( ChessPiece piece,
+			       int start_x, int start_y,
+			       int file,
+			       int rank,
+			       const struct boardvec *vectors,
+			       unsigned int numvec,
+			       int unique,
+			       int *found_x,
+			       int *found_y) const {
+  int x, y;
+  unsigned int vec, len;
+  int found = 0;
+  for ( vec = 0 ; vec < numvec ; ++vec ) {
+    for ( x = start_x + vectors[ vec ].x,
+	    y = start_y + vectors[ vec ].y,
+	    len = 1 ;
+
+	  x >= 1 && x <= 8 && y >= 1 && y <= 8 // Stay on the board
+	    && len <= vectors[ vec ].len ; // check magnitude
+
+	  x += vectors[ vec ].x,           // Move in the direction of
+	    y += vectors[ vec ].y,
+	    ++len ) {      // the current vector
+
+      // It's rather inefficient to check the rank/file this way, but
+      // they're relatively rare in practice (mostly for a clarifier
+      // in PGN notation)
+
+      if ( file && file != x )
+	continue;
+      if ( rank && rank != y )
+	continue;
+
+//        cout << "Looking for a piece on (" << x << ',' << y << ')'
+//  	   << endl;
+
+      ChessPiece found_piece = get_piece_at( x, y );
+      if ( found_piece == piece ) {
+
+	*found_x = x;
+	*found_y = y;
+
+	if ( unique ) {
+
+	  if ( found ) // Ambiguous
+	    return 0;
+	  else
+	    found = 1;
+
+	} else {
+
+	  return 1;
+	      
+	}
+	    
+	break;
+      }
+    }
+  }
+
+  return found;
+}
