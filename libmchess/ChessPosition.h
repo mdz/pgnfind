@@ -3,19 +3,13 @@
 #define _CHESSPOSITION_H
 
 #include "ChessPiece.h"
+#include "ChessVector.h"
 
 //
 // Note: all positions are specified in rank-file notation (e.g., a4,
 // h7, etc.), except in the (x, y) forms of certain functions, (which
 // accept numerical coordinates in the range [1,8]
 //
-
-// For search vectors
-struct boardvec {
-  int x;
-  int y;
-  unsigned int len;
-};
 
 class ChessPosition {
   //
@@ -39,6 +33,7 @@ public:
 		  Queenside = 0x01,
 		  Kingside = 0x02,
 		  Both = Queenside | Kingside };
+  enum Exception { InvalidPosition };
 
   //
   // Accessors
@@ -79,6 +74,21 @@ public:
   // Is the specified color king in check?
   int in_check( Color ) const;
 
+  // Find a piece, starting at the specified square and searching
+  // along the specified vectors.  The search can be restricted to a
+  // specified rank (x)or file.  If unique is true, the search fails
+  // if more than one piece is found.  On success, the coordinates of the
+  // found piece are placed in found_x and found_y
+  int find_piece( ChessPiece piece,
+		  int start_x, int start_y,
+		  int rank,
+		  int file,
+		  const ChessVector *vectors,
+		  unsigned int numvec,
+		  int unique,
+		  int *found_x,
+		  int *found_y ) const;
+
   //
   // Mutators
   //
@@ -114,21 +124,6 @@ public:
   // Read a FEN from an in-memory buffer Returns 1 if successful, 0 if
   // the buffer does not contain a valid FEN
   int read_FEN( const char *buf );
-
-  // Find a piece, starting at the specified square and searching
-  // along the specified vectors.  The search can be restricted to a
-  // specified rank (x)or file.  If unique is true, the search fails
-  // if more than one piece is found.  On success, the coordinates of the
-  // found piece are placed in found_x and found_y
-  int find_piece( ChessPiece piece,
-		  int start_x, int start_y,
-		  int rank,
-		  int file,
-		  const struct boardvec *vectors,
-		  unsigned int numvec,
-		  int unique,
-		  int *found_x,
-		  int *found_y ) const;
 
   //
   // Protected member functions
