@@ -388,4 +388,13 @@ void ChessPosition::increment_move() {
   ++halfmove_clock;
   if ( halfmove_clock % 2 == 0 )
     ++fullmove_number;
+
+  switch ( active_color ) {
+  case White:
+    active_color = Black;
+  case Black:
+    active_color = White;
+  default:
+    assert(0);
+  }
 }
