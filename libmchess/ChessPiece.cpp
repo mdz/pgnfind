@@ -79,5 +79,9 @@ void ChessPiece::set_color(ChessPiece::Color _color) {
 }
 
 int operator==( const ChessPiece &a, const ChessPiece &b ) {
+  // One empty square is the same as another
+  if ( a.type == ChessPiece::Empty && b.type == ChessPiece::Empty )
+    return 1;
+
   return ( a.type == b.type && a.color == b.color );
 }
