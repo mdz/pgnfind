@@ -4,6 +4,8 @@
 #define assert(x)
 #endif
 
+#include <iostream.h>
+
 #include "ChessMove.h"
 #include "alg_parse.h"
 
@@ -12,7 +14,7 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
   assert( format == Algebraic || format == Descriptive );
 
   if ( format == Algebraic ) {
-    assert( game != NULL ); // Programmatic error
+    //assert( game != NULL ); // Programmatic error
 
     if ( strlen( data ) < 2 ) // User error
       throw InvalidMove;
@@ -25,6 +27,16 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
     struct Schessmove *move = alg_parse( data );
     if (!move)
       throw InvalidMove;
+
+    cout << "Parsed move:" << endl;
+    cout << "piece: " << move->piece << endl;
+    cout << "clarifier.rank: " << move->clarifier.rank << endl;
+    cout << "clarifier.file: " << move->clarifier.file << endl;
+    cout << "square.rank: " << move->square.rank << endl;
+    cout << "square.file: " << move->square.file << endl;
+    cout << "capture: " << move->capture << endl;
+    cout << "check: " << move->check << endl;
+    cout << "promote: " << move->promote << endl;
       
     ChessPiece::Type piece_type = move->piece;
 
@@ -33,6 +45,7 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
     switch ( piece_type ) {
     case ChessPiece::Pawn:
     case ChessPiece::Bishop:
+    case ChessPiece::Knight:
     case ChessPiece::Rook:
     case ChessPiece::Queen:
     case ChessPiece::King:
@@ -41,7 +54,7 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
       throw InvalidMove;
     }
 
-
+    
     // Trust no one...not even the parser.
 
     if ( move->square.file >= 1 && move->square.file <= 8  )
@@ -59,6 +72,7 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
       throw InvalidMove;
     }
 	
+    
     //
     // Determine start square
     //
@@ -69,13 +83,13 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 	throw InvalidMove;
 
       // Initial two-square advance
-      if ( end_y == 4 &&
-	   game->current_position().get_piece_at( end_x, 2 ).get_type() ==
-	   ChessPiece::Pawn ) {
-	start_x = 2;
-      } else {
-	start_x = end_x - 1;
-      }
+//        if ( end_y == 4 &&
+//  	   game->current_position().get_piece_at( end_x, 2 ).get_type() ==
+      //   ChessPiece::Pawn ) {
+//  	start_x = 2;
+//        } else {
+//  	start_x = end_x - 1;
+//        }
 
       break;
 

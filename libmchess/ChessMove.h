@@ -10,6 +10,7 @@ class ChessMove {
   //
   // Public data types
   //
+public:
   enum MoveFormat { Algebraic, Descriptive };
   enum Exception { InvalidMove, IllegalMove };
 

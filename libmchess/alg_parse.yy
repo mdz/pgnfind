@@ -13,16 +13,19 @@
 #include "alg_parse.h"
 
 #define YYERROR_VERBOSE
+#define YYDEBUG 1
 
 #define MAX_MOVE_LEN 16
   
   static int move_index;
   static char move_str[MAX_MOVE_LEN + 1] = "";
+  static struct Sclarifier clar_none = { 0,0 };
   static struct Schessmove move_data;
   static char *err_msg;
 
   static int yylex();
   static int yyerror(char *);
+
 
 %}
 
@@ -35,50 +38,54 @@
   struct Schessmove move;
 }
 
-%token <ch> CHAR
+%token <num> INT
 
-%type <num> rank file
-%type <piece> piece
-%type <clarifier> clarifier rank_clarifier file_clarifier
+%type <num> rank file maybe_capture
+%type <piece> piece maybe_promote
 %type <square> square
-%type <num> capture
 %type <move> input move_check move
 
 %%
 
-   input: move_check	{ $$ = $1; }
+   input: move_check	{ $$ = $1; move_data = $1; }
 	;
 
    move_check: move	{ $$ = $1; }
 	| move '+'	{ $$ = $1; $$.check = 1; }
 	;
 
-   move: piece clarifier capture square	{ $$.piece = $1;
-					  $$.clarifier = $2;
-					  $$.capture = $3;
-					  $$.square = $4; }
+   move: piece 'x' square	        { $$.piece = $1;
+					  $$.clarifier = clar_none;
+					  $$.capture = 1;
+					  $$.square = $3; }
+	| piece square			{ $$.piece = $1;
+					  $$.clarifier = clar_none;
+					  $$.capture = 0;
+					  $$.square = $2; }
 
-	| square			{ $$.piece = ChessPiece::Pawn;
+	| piece file maybe_capture square { $$.piece = $1;
+					    $$.capture = $2;
+					    $$.clarifier.file =  $3;
+					    $$.clarifier.rank = 0;
+					    $$.square = $4; }
+
+	| piece rank maybe_capture square { $$.piece = $1;
+					    $$.capture = $2;
+					    $$.clarifier.file =  0;
+					    $$.clarifier.rank = $3;
+					    $$.square = $4; }
+
+	| square maybe_promote		{ $$.piece = ChessPiece::Pawn;
 					  $$.capture = 0;
 					  $$.square = $1;
-					  $$.promote = ChessPiece::Empty }
+					  $$.promote = $2; }
 
-        | file_clarifier 'x' square	{ $$.piece = ChessPiece::Pawn;
-					  $$.clarifier = $1;
+        | file 'x' square maybe_promote	{ $$.piece = ChessPiece::Pawn;
+					  $$.clarifier.file = $1;
 					  $$.capture = 1;
 					  $$.square = $3;
-					  $$.promote = ChessPiece::Empty }
+					  $$.promote = $4; }
 					  
-	| square '=' piece		{ $$.piece = ChessPiece::Pawn;
-					  $$.square = $1;
-					  $$.capture = 0;
-					  $$.promote = $3; }
-
-	| file_clarifier 'x' square '=' piece	{ $$.piece = ChessPiece::Pawn;
-						  $$.clarifier = $1;
-						  $$.square = $3;
-						  $$.promote = $5;
-						  $$.capture = 1; }
 	;
 
    piece: 'N'	{ $$ = ChessPiece::Knight; }
@@ -88,21 +95,13 @@
 	| 'K'	{ $$ = ChessPiece::King; }
 	;
 
-   capture: 'x'	{ $$ = 1; }
-	|	{ $$ = 0; }
-	;
+   maybe_capture: 'x' { $$ = 1; }
+	| /* empty */ { $$ = 0; }
 
-   square: rank file	{ $$.rank = $1; $$.file = $2; }
+   square: file rank	{ $$.rank = $1; $$.file = $2; }
 
-   clarifier: rank_clarifier
-	| file_clarifier
-	|	{ $$.rank = 0; $$.file = '\0'; }
-	;
-
-   rank_clarifier: rank	{ $$.rank = $1; $$.file = '\0'; }
-	;
-
-   file_clarifier: file	{ $$.file = $1; $$.rank = 0; }
+   maybe_promote: /* empty */ { $$ = ChessPiece::Empty; }
+	| '=' piece	      { $$ = $2; };
 
    rank: '1'		{ $$ = 1; }
 	| '2'		{ $$ = 2; }
@@ -130,8 +129,7 @@ int yylex() {
   if ( move_index >= MAX_MOVE_LEN ) {
     return 0;
   } else {
-    yylval.ch = move_str[ move_index++ ];
-    return CHAR;
+    return move_str[ move_index++ ];
   }
 }
 
@@ -144,7 +142,11 @@ struct Schessmove *alg_parse( const char *_move_str ) {
   strncpy( move_str, _move_str, 16 );
   move_str[ MAX_MOVE_LEN ] = '\0';
   move_index = 0;
-  if ( yyparse() ) {
+
+  yydebug = 1;
+
+  if ( yyparse() == 0 ) {
+    printf("alg_parse: yyparse() successful\n");
     return &move_data;
   } else {
     return NULL;
