@@ -69,8 +69,12 @@ ChessPosition::Castling ChessPosition::get_castling( Color color ) const {
   }
 }
 
-const char *ChessPosition::get_en_passant() const {
-  return en_passant;
+int ChessPosition::get_en_passant_x() const {
+  return en_passant_x;
+}
+
+int ChessPosition::get_en_passant_y() const {
+  return en_passant_y;
 }
 
 int ChessPosition::get_halfmove_clock() const {
@@ -162,9 +166,10 @@ void ChessPosition::write_FEN( char *buf ) const {
   //
   // En passant target square
   //
-  if ( en_passant[0] != '\0' ) {
-    *(buf++) = en_passant[0];
-    *(buf++) = en_passant[1];
+  if ( en_passant_x != 0 
+       && en_passant_y != 0 ) {
+    *(buf++) = 'a' + en_passant_x - 1;
+    *(buf++) = '1' + en_passant_y - 1;
   } else {
     *(buf++) = '-';
   }
@@ -216,10 +221,9 @@ void ChessPosition::set_castling( ChessPosition::Color color,
   }
 }
 
-void ChessPosition::set_en_passant( const char *square ) {
-  assert( strlen(square) == 2 );
-  strncpy(en_passant, square, 2);
-  en_passant[2] = '\0';
+void ChessPosition::set_en_passant( int x, int y ) {
+  en_passant_x = x;
+  en_passant_y = y;
 }
 
 void ChessPosition::set_halfmove_clock( int value ) {
@@ -311,23 +315,15 @@ int ChessPosition::read_FEN( const char *_buf ) {
     set_castling( White, Kingside );
   }
   if ( strchr( current, 'Q' ) ) {
-    if ( get_castling( White ) == Kingside ) {
-      set_castling( White, Both );
-    } else {
-      set_castling( White, Queenside );
-    }
+    set_castling( White, (Castling)( get_castling( White ) | Queenside ) );
   }
 
   set_castling( Black, None );
   if ( strchr( current, 'k' ) ) {
-    set_castling( Black, Kingside );
+    set_castling( Black,  Kingside );
   }
   if ( strchr( current, 'q' ) ) {
-    if ( get_castling( Black ) == Kingside ) {
-      set_castling( Black, Both );
-    } else {
-      set_castling( Black, Queenside );
-    }
+    set_castling( Black, (Castling)( get_castling( Black ) | Queenside ) );
   }
 
   // Advance past null-terminated section to start of next field
@@ -341,8 +337,15 @@ int ChessPosition::read_FEN( const char *_buf ) {
   }
   *ptr = '\0';
 
-  if ( strcmp( current, "-" ) ) { // en passant
-    set_en_passant( current );
+  if ( !strcmp( current, "-" ) ) { // en passant
+    set_en_passant( 0, 0 );
+  } else if ( strlen(current) == 2 ) {
+    
+    set_en_passant( *(current) - 'a' + 1,
+		    *(current + 1) - '1' + 1 );
+  } else {
+    cerr << "ChessPosition::read_FEN: invalid en passant square" << endl;
+    return 0;
   }
 
   // Advance past null-terminated section to start of next field

@@ -27,7 +27,10 @@ public:
   //
 public:
   enum Color { White, Black };
-  enum Castling { None, Queenside, Kingside, Both };
+  enum Castling { None = 0x00,
+		  Queenside = 0x01,
+		  Kingside = 0x02,
+		  Both = Queenside | Kingside };
 
   //
   // Accessors
@@ -46,9 +49,10 @@ public:
   // Can the specified player castle, and if so, where?
   Castling get_castling( Color ) const;
 
-  // If an en passant capture is possible, on which square (a4, etc.)?
-  // If none, returns NULL
-  const char *get_en_passant() const;
+  // If an en passant capture is possible, on which square?
+  // If none, returns 0
+  int get_en_passant_x() const;
+  int get_en_passant_y() const;
 
   // How many half-moves since the last pawn advance or capturing move?
   int get_halfmove_clock() const;
@@ -79,8 +83,8 @@ public:
   // Set castling availability
   void set_castling( Color, Castling );
 
-  // Set en passant move (NULL for none)
-  void set_en_passant( const char *square );
+  // Set en passant move (0, 0 for none)
+  void set_en_passant( int x, int y );
 
   // Set the halfmove clock
   void set_halfmove_clock( int );
@@ -113,7 +117,8 @@ private:
   Color active_color;
   Castling white_castling;
   Castling black_castling;
-  char en_passant[3];
+  int en_passant_x;
+  int en_passant_y;
   int halfmove_clock;
   int fullmove_number;
 };
