@@ -36,6 +36,12 @@ class ChessPiece {
   void set_color(Color);
 
   //
+  // Operators
+  //
+public:
+  friend int operator==( const ChessPiece &, const ChessPiece & );
+
+  //
   // Private data
   //
  private:
