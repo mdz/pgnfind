@@ -12,7 +12,8 @@
 #include "alg_parse_int.h"
 #include "pgn_lex_int.h"
 
-#define PGN_MAX_LENGTH 2048
+// Maximum length of a single game in PGN
+#define PGN_MAX_LENGTH 10240
 
 // Localify yacc stuff
 
