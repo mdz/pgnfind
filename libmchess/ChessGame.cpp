@@ -8,6 +8,7 @@
 #define assert(x)
 #endif
 
+#include "pgn_parse_int.h"
 #include "ChessGame.h"
 
 ChessGame::ChessGame() {
@@ -19,6 +20,7 @@ ChessGame::ChessGame() {
 
 ChessGame::ChessGame( const char *pgn ) {
   ChessGame();
+  do_pgn_parse( pgn, this );
 }
 
 ChessGame::ChessGame( const ChessPosition &pos ):
@@ -88,6 +90,9 @@ void ChessGame::make_move( const ChessMove &move ) {
   position.set_castling( position.get_active_color(),
 			 move.get_castling() );
 
-  // Increment the move counters
+  // Set halfmove clock
+  position.set_halfmove_clock( move.get_halfmove_clock() );
+
+  // Increment fullmove clock if appropriate
   position.increment_move();
 }
