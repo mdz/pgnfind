@@ -11,33 +11,7 @@
 #include <iostream.h>
 
 #include "ChessMove.h"
-
-// For searching...order is important
-static const struct boardvec vectors[] = {
-  // Diagonals (4)
-  { 1, 1, 8 },
-  { -1, 1, 8 },
-  { 1, -1, 8 },
-  { -1, -1, 8 },
-  // Horizontals and verticals (4)
-  { 1, 0, 8 },
-  { -1, 0, 8 },
-  { 0, 1, 8 },
-  { 0, -1, 8 },
-  // Knights (8)
-  { 1, 2, 1 },
-  { -1, 2, 1 },
-  { 1, -2, 1 },
-  { -1, -2, 1 },
-  { 2, 1, 1 },
-  { -2, 1, 1 },
-  { 2, -1, 1 },
-  { -2, -1, 1 } };
-
-static const struct boardvec *hv_diag_vectors = &vectors[0]; // length 8
-static const struct boardvec *diagonal_vectors = &vectors[0]; // length 4
-static const struct boardvec *hv_vectors = &vectors[4]; // length 4
-static const struct boardvec *knight_vectors = &vectors[8]; // length 8
+#include "ChessVector.h"
 
 ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 		      const ChessGame *game ) {
@@ -253,7 +227,7 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 		       end_y,
 		       move->clarifier.file,
 		       move->clarifier.rank,
-		       knight_vectors, 8,
+		       knight_vectors, num_knight_vectors,
 		       1,
 		       &start_x,
 		       &start_y ) ) {
@@ -270,7 +244,7 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 		       end_y,
 		       move->clarifier.file,
 		       move->clarifier.rank,
-		       diagonal_vectors, 4,
+		       bishop_vectors, num_bishop_vectors,
 		       1,
 		       &start_x,
 		       &start_y ) ) {
@@ -287,7 +261,7 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 		       end_y,
 		       move->clarifier.file,
 		       move->clarifier.rank,
-		       hv_vectors, 4,
+		       rook_vectors, num_rook_vectors,
 		       1,
 		       &start_x,
 		       &start_y ) ) {
@@ -314,7 +288,7 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 		       end_y,
 		       move->clarifier.file,
 		       move->clarifier.rank,
-		       hv_diag_vectors, 8,
+		       queen_vectors, num_queen_vectors,
 		       1,
 		       &start_x,
 		       &start_y ) ) {
