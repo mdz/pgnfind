@@ -2,8 +2,10 @@
 #ifndef _CHESSGAME_H
 #define _CHESSGAME_H
 
-#include "ChessPiece.h"
 #include "ChessPosition.h"
+#include "ChessMove.h"
+
+#define CHESSGAME_MAX_MOVES 200
 
 class ChessGame {
   //
@@ -20,6 +22,13 @@ public:
   // Accessors
   //
   const ChessPosition &current_position() const;
+
+  //
+  // Protected data
+  //
+protected:
+  ChessPosition position;
+  class ChessMove *moves[ CHESSGAME_MAX_MOVES ];
 };
 
 #endif /* !_CHESSGAME_H */
