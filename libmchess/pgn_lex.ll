@@ -1,6 +1,8 @@
 %{
 // -*- C++ -*-
 
+#include <iostream.h>
+
 #include "ChessMove.h"
 #include "alg_parse_int.h"
 #include "pgn_parse_int.h" // Our stuff
@@ -109,22 +111,10 @@ other .
 {number} yylval.num = atoi(yytext); return NUM;
 
 {alg_move} {
-  try {
-    yylval.move =  new ChessMove( yytext,
-				  ChessMove::Algebraic,
-				  pgn_game );
-  }
-
-  catch ( ChessMove::Exception cme ) {
-    switch ( cme ) {
-    case ChessMove::InvalidMove:
-      yyerror("Invalid move"); return 0;
-    case ChessMove::IllegalMove:
-      yyerror("Illegal move"); return 0;
-    default:
-      yyerror("Unrecognized exception from ChessMove"); return 0;
-    }
-  }
+  cout << "Trying move: " << yytext << endl;
+  yylval.move =  new ChessMove( yytext,
+				ChessMove::Algebraic,
+				pgn_game );
 
   return MOVE;
 }
