@@ -126,9 +126,18 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
       if ( end_y == ( second_rank ) || end_y == (second_rank - dir) )
 	throw InvalidMove;
 
-      if ( move->capture ) {
+      if ( move->capture ) { // Pawn captures
+	start_x = move->clarifier.file;
+	if ( !( start_x >= 1 && start_x <= 8 ) )
+	  throw InvalidMove;
+
+	// Does not handle en passant yet
+	start_y = end_y - dir;
+
+	if ( !( start_y >= 1 && start_y <= 8 ) )
+	  throw InvalidMove;
 	
-      } else { // No capture
+      } else { // Pawn moves without capture
 	start_x = end_x;
 	
 	// Initial two-square advance
