@@ -10,7 +10,9 @@
 
 #include "ChessPiece.h"
 #include "ChessMove.h"
-#include "alg_parse.h"
+
+// Our stuff...alg_parse.h is yacc's stuff (which we get for free)
+#include "alg_parse_int.h"
 
 #define YYERROR_VERBOSE
 #define YYDEBUG 1
@@ -72,13 +74,13 @@
 					  $$.square = $2; }
 
 	| piece file maybe_capture square { $$.piece = $1;
-					    $$.capture = $2;
-					    $$.clarifier.file =  $3;
+					    $$.clarifier.file =  $2;
+					    $$.capture = $3;
 					    $$.square = $4; }
 
 	| piece rank maybe_capture square { $$.piece = $1;
-					    $$.capture = $2;
-					    $$.clarifier.rank = $3;
+					    $$.clarifier.rank = $2;
+					    $$.capture = $3;
 					    $$.square = $4; }
 
 	| square maybe_promote		{ $$.piece = ChessPiece::Pawn;
