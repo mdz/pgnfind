@@ -51,7 +51,7 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
     // Call the algebraic notation parser
     //
 
-    struct Schessmove *move = alg_parse( data );
+    struct Schessmove *move = do_alg_parse( data );
 
     if (!move)
       throw InvalidMove;

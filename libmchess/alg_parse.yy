@@ -14,6 +14,89 @@
 // Our stuff...alg_parse.h is yacc's stuff (which we get for free)
 #include "alg_parse_int.h"
 
+// Localify yacc stuff
+
+#undef yymaxdepth
+#undef yyparse
+#undef yylex
+#undef yyerror
+#undef yylval
+#undef yychar
+#undef yydebug
+#undef yypact
+#undef yyr1
+#undef yyr2
+#undef yydef
+#undef yychk
+#undef yypgo
+#undef yyact
+#undef yyexca
+#undef yyerrflag
+#undef yynerrs
+#undef yyps
+#undef yypv
+#undef yys
+#undef yy_yys
+#undef yystate
+#undef yytmp
+#undef yyv
+#undef yy_yyv
+#undef yyval
+#undef yylloc
+#undef yyreds
+#undef yytoks
+#undef yylhs
+#undef yylen
+#undef yydefred
+#undef yydgoto
+#undef yysindex
+#undef yyrindex
+#undef yygindex
+#undef yytable
+#undef yycheck
+#undef yyname
+#undef yyrule
+#define	yymaxdepth alg_maxdepth
+#define	yyparse	alg_parse
+#define	yylex	alg_lex
+#define	yyerror	alg_error
+#define	yylval	alg_lval
+#define	yychar	alg_char
+#define	yydebug	alg_debug
+#define	yypact	alg_pact
+#define	yyr1	alg_r1
+#define	yyr2	alg_r2
+#define	yydef	alg_def
+#define	yychk	alg_chk
+#define	yypgo	alg_pgo
+#define	yyact	alg_act
+#define	yyexca	alg_exca
+#define yyerrflag alg_errflag
+#define yynerrs	alg_nerrs
+#define	yyps	alg_ps
+#define	yypv	alg_pv
+#define	yys	alg_s
+#define	yy_yys	alg_yys
+#define	yystate	alg_state
+#define	yytmp	alg_tmp
+#define	yyv	alg_v
+#define	yy_yyv	alg_yyv
+#define	yyval	alg_val
+#define	yylloc	alg_lloc
+#define yyreds	alg_reds
+#define yytoks	alg_toks
+#define yylhs	alg_yylhs
+#define yylen	alg_yylen
+#define yydefred alg_yydefred
+#define yydgoto	alg_yydgoto
+#define yysindex alg_yysindex
+#define yyrindex alg_yyrindex
+#define yygindex alg_yygindex
+#define yytable	 alg_yytable
+#define yycheck	 alg_yycheck
+#define yyname   alg_yyname
+#define yyrule   alg_yyrule
+
 #define YYERROR_VERBOSE
 #define YYDEBUG 1
 
@@ -153,7 +236,7 @@ int yyerror( char *s ) {
   return 1;
 }
 
-struct Schessmove *alg_parse( const char *_move_str ) {
+struct Schessmove *do_alg_parse( const char *_move_str ) {
   strncpy( move_str, _move_str, 16 );
   move_str[ MAX_MOVE_LEN ] = '\0';
   move_index = 0;

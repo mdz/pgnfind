@@ -34,6 +34,6 @@ typedef struct {
   ChessPosition::Castling castling;
 } Schessmove;
 
-struct Schessmove *alg_parse( const char *_move_str );
+struct Schessmove *do_alg_parse( const char *_move_str );
 
 #endif /* !_ALG_PARSE_H */
