@@ -12,25 +12,38 @@
 
 #include "ChessMove.h"
 
-// For searching
+// For searching...order is important
 static const struct boardvec vectors[] = {
-  // Diagonals
-  { 1, 1 },
-  { -1, 1 },
-  { 1, -1 },
-  { -1, -1 },
-  // Horizontals and verticals
-  { 1, 0 },
-  { -1, 0 },
-  { 0, 1 },
-  { 0, -1 } };
+  // Diagonals (4)
+  { 1, 1, 8 },
+  { -1, 1, 8 },
+  { 1, -1, 8 },
+  { -1, -1, 8 },
+  // Horizontals and verticals (4)
+  { 1, 0, 8 },
+  { -1, 0, 8 },
+  { 0, 1, 8 },
+  { 0, -1, 8 },
+  // Knights (8)
+  { 1, 2, 1 },
+  { -1, 2, 1 },
+  { 1, -2, 1 },
+  { -1, -2, 1 },
+  { 2, 1, 1 },
+  { -2, 1, 1 },
+  { 2, -1, 1 },
+  { -2, -1, 1 } };
 
-static const struct boardvec *diagonal_vectors = &vectors[0];
-static const struct boardvec *hv_vectors = &vectors[4];
+static const struct boardvec *hv_diag_vectors = &vectors[0]; // length 8
+static const struct boardvec *diagonal_vectors = &vectors[0]; // length 4
+static const struct boardvec *hv_vectors = &vectors[4]; // length 4
+static const struct boardvec *knight_vectors = &vectors[8]; // length 8
 
 ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 		      const ChessGame *game ) {
   assert( format == Algebraic || format == Descriptive );
+
+  assert( game != NULL );
 
   ChessPosition::Color pos_color =
     game->current_position().get_active_color();
@@ -48,9 +61,13 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
   //
 
   if ( format == Algebraic ) {
-    assert( game != NULL ); // Programmatic error
 
-    if ( strlen( data ) < 2 ) // User error
+    //
+    // Algebraic notation
+    //
+
+    // Inexpensive sanity check before calling the parser
+    if ( strlen( data ) < 2 )
       throw InvalidMove;
       
     //
@@ -92,8 +109,11 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
       throw InvalidMove;
     }
     
+    //
     // Sanity checks...trust no one...not even the parser.
+    //
 
+    // Check coordinate ranges
     if ( !move->castling )
       if ( move->square.file >= 1 && move->square.file <= 8  )
 	end_x = move->square.file;
@@ -106,9 +126,17 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
       else 
 	throw InvalidMove;
 
+    // Check the clarifier...a problem here would be indicative of a
+    // programmatic error in the parser
+    assert( !( move->clarifier.rank && move->clarifier.file ) );
 
     // Check active color
-    assert( pos_color == ChessPosition::White || pos_color == ChessPosition::Black );
+    assert( pos_color == ChessPosition::White
+	    || pos_color == ChessPosition::Black );
+
+    //
+    // Determine the color of the piece being moved
+    //
 
     ChessPiece::Color piece_color =
       ( pos_color == ChessPosition::White )
@@ -129,13 +157,15 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
     if ( move->capture )
       halfmove_clock = 0;
 
-    
     //
     // Determine start square
     //
 
     int found = 0;
     switch ( piece_type ) {
+      //
+      // Pawn moves
+      //
     case ChessPiece::Pawn:
       int dir, eighth_rank, second_rank;
 
@@ -155,7 +185,10 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
       if ( end_y == ( second_rank ) || end_y == (second_rank - dir) )
 	throw InvalidMove;
 
-      if ( move->capture ) { // Pawn captures
+      if ( move->capture ) {
+	//
+	// Pawn captures
+	//
 
 	start_x = move->clarifier.file;
 	start_y = end_y - dir;
@@ -164,23 +197,36 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 	  throw InvalidMove;
 	}
 
-      } else { // Pawn moves without capture
+      } else {
+	//
+	// Pawn moves without capture
+	//
+
 	start_x = end_x;
 	
-	// Initial two-square advance
 	if ( ( end_y == second_rank + ( dir * 2 ) )
 	     && ( game->current_position().get_piece_at( end_x,
 							 second_rank + dir )
 		  .get_type() == ChessPiece::Empty )
 	     && ( game->current_position().get_piece_at( end_x, second_rank )
 		  == ChessPiece( ChessPiece::Pawn, piece_color ) ) ) {
+	  //
+	  // Initial two-square advance
+	  //
+
 	  start_y = second_rank;
 	  en_passant_x = start_x;
 	  en_passant_y = second_rank + dir;
-	} else if ( game->current_position(). // Normal pawn move
+
+	} else if ( game->current_position().
 		    get_piece_at( end_x, end_y - dir )
 		    == ChessPiece( ChessPiece::Pawn, piece_color ) ) {
+	  //
+	  // Normal pawn move
+	  //
+
 	  start_y = end_y - dir;
+
 	} else {
 	  throw InvalidMove;
 	}
@@ -201,56 +247,55 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
       break;
 
     case ChessPiece::Knight:
-      // Build a table of possible start squares
-      // We enclose this in a block so that its scope is limited
-      // to this case...otherwise, the compiler might get upset
-      if (1) {
-	struct {
-	  int x;
-	  int y;
-	} starts[8] = { { end_x + 1, end_y + 2 },
-			{ end_x + 2, end_y + 1 },
-			{ end_x + 1, end_y - 2 },
-			{ end_x + 2, end_y - 1 },
-			{ end_x - 1, end_y + 2 },
-			{ end_x - 2, end_y + 1 },
-			{ end_x - 1, end_y - 2 },
-			{ end_x - 2, end_y - 1 } };
+      if ( ! game->current_position().
+	   find_piece( ChessPiece( ChessPiece::Knight, piece_color ),
+		       end_x,
+		       end_y,
+		       move->clarifier.file,
+		       move->clarifier.rank,
+		       knight_vectors, 8,
+		       1,
+		       &start_x,
+		       &start_y ) ) {
 
-	// Look for a knight on each of them
-	for ( int i = 0 ; i < 8 ; ++i ) {
-	  if (starts[i].x >= 1 && starts[i].x <= 8 && // is on the board
-	      starts[i].y >= 1 && starts[i].y <= 8 &&
-	      ( move->clarifier.rank == 0 ||
-		move->clarifier.rank == starts[i].y ) && // and matches a
-	      ( move->clarifier.file == 0 || // clarifier if one was given
-		move->clarifier.file == starts[i].x ) &&
-	      game->current_position().get_piece_at( starts[i].x,
-						     starts[i].y )
-	      == ChessPiece( ChessPiece::Knight, piece_color ) ) {
-	    if ( found ) // ambiguous
-	      throw InvalidMove;
-	    start_x = starts[i].x;
-	    start_y = starts[i].y;
-	    found = 1;
-	  }
-	}
-
-	if (!found)
 	  throw InvalidMove;
       }
 					    
       break;
 
     case ChessPiece::Bishop:
-      find_piece( game->current_position(),
-		  diagonal_vectors, 4,
-		  ChessPiece::Bishop,
-		  piece_color,
-		  move->clarifier );
+      if ( ! game->current_position().
+	   find_piece( ChessPiece( ChessPiece::Bishop, piece_color ),
+		       end_x,
+		       end_y,
+		       move->clarifier.file,
+		       move->clarifier.rank,
+		       diagonal_vectors, 4,
+		       1,
+		       &start_x,
+		       &start_y ) ) {
+	
+	throw InvalidMove;
+      }
+      
       break;
 
     case ChessPiece::Rook:
+      if ( ! game->current_position().
+	   find_piece( ChessPiece( ChessPiece::Rook, piece_color ),
+		       end_x,
+		       end_y,
+		       move->clarifier.file,
+		       move->clarifier.rank,
+		       hv_vectors, 4,
+		       1,
+		       &start_x,
+		       &start_y ) ) {
+
+	throw InvalidMove;
+
+      }
+      
       // Disallow castling, where appropriate
       if ( start_x == 1 ) {
 	castling = (ChessPosition::Castling)
@@ -259,20 +304,25 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 	castling = (ChessPosition::Castling)
 	  ( castling & ~(ChessPosition::Kingside) );
       }
-
-      find_piece( game->current_position(),
-		  hv_vectors, 4,
-		  ChessPiece::Rook,
-		  piece_color,
-		  move->clarifier );
+	
       break;
 
     case ChessPiece::Queen:
-      find_piece( game->current_position(),
-		  vectors, 8,
-		  ChessPiece::Queen,
-		  piece_color,
-		  move->clarifier );
+      if ( ! game->current_position().
+	   find_piece( ChessPiece( ChessPiece::Queen, piece_color ),
+		       end_x,
+		       end_y,
+		       move->clarifier.file,
+		       move->clarifier.rank,
+		       hv_diag_vectors, 8,
+		       1,
+		       &start_x,
+		       &start_y ) ) {
+	
+	throw InvalidMove;
+
+      }
+      
       break;
 
     case ChessPiece::King:
@@ -395,55 +445,4 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
     // This isn't here yet
     throw InvalidMove;
   }
-}
-
-// Search for a piece along the specified vectors from the end square,
-// to see if it could have moved there.  If none is found, or more
-// than one, throw InvalidMove
-void ChessMove::find_piece( const ChessPosition &pos,
-			    const struct boardvec *vectors,
-			    int num_vectors,
-			    ChessPiece::Type piece_type,
-			    ChessPiece::Color color,
-			    const Sclarifier &clarifier ) {
-  int x, y, vec;
-  int found = 0;
-  for ( vec = 0 ; vec < num_vectors ; ++vec ) {
-    for ( x = end_x + vectors[ vec ].x,    // Start one square away from
-	    y = end_y + vectors[ vec ].y ; // the end square
-
-	  x >= 1 && x <= 8 && y >= 1 && y <= 8 ; // Stay on the board
-
-	  x += vectors[ vec ].x,           // Move in the direction of
-	    y += vectors[ vec ].y ) {      // the current vector
-
-      // It's rather inefficient to check the clarifier this way, but
-      // they're relatively rare in practice
-      if ( clarifier.file && clarifier.file != x )
-	continue;
-      if ( clarifier.rank && clarifier.rank != y )
-	continue;
-
-//        cout << "Looking for a piece on (" << x << ',' << y << ')'
-//  	   << endl;
-      ChessPiece piece = pos.get_piece_at( x, y );
-      if ( piece.get_type() != ChessPiece::Empty ) {
-	if ( piece == ChessPiece( piece_type, color ) ) {
-	      
-	  if ( found ) // Ambiguous
-	    throw InvalidMove;
-	      
-	  start_x = x;
-	  start_y = y;
-	  found = 1;
-	      
-	}
-	    
-	break;
-      }
-    }
-  }
-
-  if (!found)
-    throw InvalidMove;
 }

@@ -7,11 +7,6 @@
 #include "ChessGame.h"
 #include "alg_parse_int.h"
 
-struct boardvec {
-  int x;
-  int y;
-};
-
 class ChessMove {
   //
   // Public data types
@@ -60,18 +55,6 @@ public:
 
   // This will return the castling status AFTER this move is made
   ChessPosition::Castling get_castling() const { return castling; };
-
-  //
-  // Protected methods
-  //
-protected:
-  void find_piece( const ChessPosition &pos,
-		   const struct boardvec *vectors,
-		   int num_vectors,
-		   ChessPiece::Type piece_type,
-		   ChessPiece::Color color,
-		   const Sclarifier &clarifier );
-
 
   //
   // Protected data
