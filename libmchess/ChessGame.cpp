@@ -11,9 +11,9 @@ ChessGame::ChessGame( const char *pgn ) {
   ChessGame();
 }
 
-ChessGame::ChessGame( const ChessPosition &pos ) {
+ChessGame::ChessGame( const ChessPosition &pos ):
+  position(pos) {
   ChessGame();
-  position = pos;
 }
 
 const ChessPosition &ChessGame::current_position() const {
