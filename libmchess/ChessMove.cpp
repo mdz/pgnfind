@@ -32,6 +32,15 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 		      const ChessGame *game ) {
   assert( format == Algebraic || format == Descriptive );
 
+  ChessPosition::Color pos_color =
+    game->current_position().get_active_color();
+
+  // Initialize the new state variables
+  en_passant_x = 0;
+  en_passant_y = 0;
+  castling = game->current_position().get_castling( pos_color );
+						  
+
   if ( format == Algebraic ) {
     assert( game != NULL ); // Programmatic error
 
@@ -56,6 +65,7 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 	 << "capture: " << move->capture << endl
 	 << "check: " << move->check << endl
 	 << "promote: " << move->promote << endl
+	 << "castling: " << move->castling << endl
 	 << endl
 	 << "Deduced: " << endl;
       
@@ -78,23 +88,22 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
     
     // Trust no one...not even the parser.
 
-    if ( move->square.file >= 1 && move->square.file <= 8  )
-      end_x = move->square.file;
-    else 
-      throw InvalidMove;
+    if ( !move->castling )
+      if ( move->square.file >= 1 && move->square.file <= 8  )
+	end_x = move->square.file;
+      else 
+	throw InvalidMove;
 
-    if ( move->square.rank >= 1 && move->square.rank <= 8 )
-      end_y = move->square.rank;
-    else 
-      throw InvalidMove;
+    if ( !move->castling )
+      if ( move->square.rank >= 1 && move->square.rank <= 8 )
+	end_y = move->square.rank;
+      else 
+	throw InvalidMove;
 
 	
     //
     // Determine start square and color
     //
-
-    ChessPosition::Color pos_color =
-      game->current_position().get_active_color();
 
     assert( pos_color == ChessPosition::White || pos_color == ChessPosition::Black );
 
@@ -127,24 +136,27 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 	throw InvalidMove;
 
       if ( move->capture ) { // Pawn captures
-	start_x = move->clarifier.file;
-	if ( !( start_x >= 1 && start_x <= 8 ) )
-	  throw InvalidMove;
 
-	// Does not handle en passant yet
+	start_x = move->clarifier.file;
 	start_y = end_y - dir;
 
-	if ( !( start_y >= 1 && start_y <= 8 ) )
+	if ( !( start_x >= 1 && start_x <= 8 ) ) {
 	  throw InvalidMove;
-	
+	}
+
       } else { // Pawn moves without capture
 	start_x = end_x;
 	
 	// Initial two-square advance
-	if ( ( end_y == second_rank + ( dir * 2 ) ) &&
-	     ( game->current_position().get_piece_at( end_x, second_rank )
-	       == ChessPiece( ChessPiece::Pawn, piece_color ) ) ) {
+	if ( ( end_y == second_rank + ( dir * 2 ) )
+	     && ( game->current_position().get_piece_at( end_x,
+							 second_rank + dir )
+		  .get_type() == ChessPiece::Empty )
+	     && ( game->current_position().get_piece_at( end_x, second_rank )
+		  == ChessPiece( ChessPiece::Pawn, piece_color ) ) ) {
 	  start_y = second_rank;
+	  en_passant_x = start_x;
+	  en_passant_y = second_rank + dir;
 	} else if ( game->current_position(). // Normal pawn move
 		    get_piece_at( end_x, end_y - dir )
 		    == ChessPiece( ChessPiece::Pawn, piece_color ) ) {
@@ -154,6 +166,12 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 	}
       }
       
+      if ( game->current_position().get_piece_at( start_x,
+						   start_y ).get_type()
+	     != ChessPiece::Pawn ) {
+	throw InvalidMove;
+      }
+
       break;
 
     case ChessPiece::Knight:
@@ -223,10 +241,65 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
       break;
 
     case ChessPiece::King:
-      // Build a table of possible start squares
-      // We enclose this in a block so that its scope is limited
-      // to this case...otherwise, the compiler might get upset
-      if (1) {
+      if ( move->castling ) {
+	int back_rank = ( pos_color == ChessPosition::White ? 1 : 8 );
+	struct {
+	  int x;
+	  int y;
+	} king_square = { 5, back_rank },
+		  rook_square = { 0, back_rank },
+		  int_squares[2] = { { 6, back_rank },
+				     { 7, back_rank } };
+
+	switch ( move->castling ) {
+
+	case ChessPosition::Kingside:
+	  rook_square.x = 8;break;
+
+	case ChessPosition::Queenside:
+	  rook_square.x = 1;break;
+
+	default:
+	  assert(0);
+	}
+
+	cout << "Castling: " << endl
+	     << "king_square.x: " << king_square.x << endl
+	     << "king_square.y: " << king_square.y << endl
+	     << "rook_square.x: " << rook_square.x << endl
+	     << "rook_square.y: " << rook_square.y << endl
+	     << "int_squares[0].x" << int_squares[0].x << endl
+	     << "int_squares[0].y" << int_squares[0].y << endl
+	     << "int_squares[1].x" << int_squares[1].x << endl
+	     << "int_squares[1].y" << int_squares[1].y << endl
+	     << endl;
+	  
+	
+	if ( game->current_position().get_piece_at( king_square.x,
+						  king_square.y )
+	     .get_type()
+	     == ChessPiece::King
+	     && game->current_position().get_piece_at( rook_square.x,
+						     rook_square.y )
+	     .get_type()
+	     == ChessPiece::Rook
+	     && game->current_position().get_piece_at( int_squares[0].x,
+						     int_squares[0].y )
+	     .get_type()
+	     == ChessPiece::Empty
+	     && game->current_position().get_piece_at( int_squares[1].x,
+						     int_squares[1].y )
+	     .get_type()
+	     == ChessPiece::Empty ) {
+	  start_x = king_square.x;
+	  start_y = king_square.y;
+	  end_x = int_squares[1].x;
+	  end_y = int_squares[1].y;
+	} else {
+	  throw InvalidMove;
+	}
+
+      } else {
 	struct {
 	  int x;
 	  int y;
