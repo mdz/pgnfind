@@ -1,6 +1,8 @@
 #ifndef _PGN_PARSE_H
 #define _PGN_PARSE_H
 
+#include "ChessGame.h"
+
 extern ChessGame *pgn_game; // For pgn_lex
 
 int pgn_error( char * );
