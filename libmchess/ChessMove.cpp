@@ -40,7 +40,13 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
   en_passant_y = 0;
   castling = game->current_position().get_castling( pos_color );
   halfmove_clock = game->current_position().get_halfmove_clock() + 1;
+
+  promote = ChessPiece::Empty;
 						  
+  //
+  // Parse a move based on the specified format
+  //
+
   if ( format == Algebraic ) {
     assert( game != NULL ); // Programmatic error
 
@@ -131,7 +137,7 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
     int found = 0;
     switch ( piece_type ) {
     case ChessPiece::Pawn:
-      int dir, second_rank;
+      int dir, eighth_rank, second_rank;
 
       // Reset the halfmove clock
       halfmove_clock = 0;
@@ -143,6 +149,8 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 	dir = -1;
 	second_rank = 7;
       }
+
+      eighth_rank = second_rank + ( 6 * dir );
 
       if ( end_y == ( second_rank ) || end_y == (second_rank - dir) )
 	throw InvalidMove;
@@ -183,6 +191,12 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 	     != ChessPiece::Pawn ) {
 	throw InvalidMove;
       }
+
+      if ( end_y == eighth_rank )
+	if ( move->promote == ChessPiece::Empty )
+	  throw InvalidMove;
+	else
+	  promote = move->promote;
 
       break;
 
@@ -253,6 +267,8 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
       break;
 
     case ChessPiece::King:
+      castling_move = ChessPosition::None;
+
       if ( move->castling ) {
 	int back_rank = ( pos_color == ChessPosition::White ? 1 : 8 );
 	struct {
@@ -260,31 +276,37 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 	  int y;
 	} king_square = { 5, back_rank },
 		  rook_square = { 0, back_rank },
-		  int_squares[2] = { { 6, back_rank },
-				     { 7, back_rank } };
+		  int_squares[2] = { { 0, back_rank },
+				     { 0, back_rank } };
+
+        // int_squares[1] is where the king will go
 
 	switch ( move->castling ) {
 
 	case ChessPosition::Kingside:
+	  int_squares[0].x = 6;
+	  int_squares[1].x = 7;
 	  rook_square.x = 8;break;
 
 	case ChessPosition::Queenside:
+	  int_squares[0].x = 4;
+	  int_squares[1].x = 3;
 	  rook_square.x = 1;break;
 
 	default:
 	  assert(0);
 	}
 
-//  	cout << "Castling: " << endl
-//  	     << "king_square.x: " << king_square.x << endl
-//  	     << "king_square.y: " << king_square.y << endl
-//  	     << "rook_square.x: " << rook_square.x << endl
-//  	     << "rook_square.y: " << rook_square.y << endl
-//  	     << "int_squares[0].x" << int_squares[0].x << endl
-//  	     << "int_squares[0].y" << int_squares[0].y << endl
-//  	     << "int_squares[1].x" << int_squares[1].x << endl
-//  	     << "int_squares[1].y" << int_squares[1].y << endl
-//  	     << endl;
+	cout << "Castling: " << endl
+	     << "king_square.x: " << king_square.x << endl
+	     << "king_square.y: " << king_square.y << endl
+	     << "rook_square.x: " << rook_square.x << endl
+	     << "rook_square.y: " << rook_square.y << endl
+	     << "int_squares[0].x" << int_squares[0].x << endl
+	     << "int_squares[0].y" << int_squares[0].y << endl
+	     << "int_squares[1].x" << int_squares[1].x << endl
+	     << "int_squares[1].y" << int_squares[1].y << endl
+	     << endl;
 	  
 	
 	if ( game->current_position().get_piece_at( king_square.x,
@@ -307,6 +329,9 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 	  start_y = king_square.y;
 	  end_x = int_squares[1].x;
 	  end_y = int_squares[1].y;
+	  
+	  castling_move = move->castling;
+
 	} else {
 	  throw InvalidMove;
 	}
@@ -342,7 +367,7 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 	if (!found)
 	  throw InvalidMove;
       }
-					    
+
       break;
     default:
       // Should never happen, since we checked this case above
