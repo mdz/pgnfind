@@ -77,3 +77,7 @@ void ChessPiece::set(char c) {
 void ChessPiece::set_color(ChessPiece::Color _color) {
   color = _color;
 }
+
+int operator==( const ChessPiece &a, const ChessPiece &b ) {
+  return ( a.type == b.type && a.color == b.color );
+}
