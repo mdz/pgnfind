@@ -60,12 +60,13 @@ ChessPosition::Color ChessPosition::get_active_color() const {
 }
 
 ChessPosition::Castling ChessPosition::get_castling( Color color ) const {
-  assert( color == White || color == Black );
   switch ( color ) {
   case White:
     return white_castling;
   case Black:
     return black_castling;
+  default:
+    assert(0);
   }
 }
 
@@ -386,15 +387,14 @@ int ChessPosition::square_y( const char *square ) {
 }
 
 void ChessPosition::increment_move() {
-  ++halfmove_clock;
-  if ( halfmove_clock % 2 == 0 )
-    ++fullmove_number;
-
   switch ( active_color ) {
   case White:
-    active_color = Black;break;
+    active_color = Black;
+    break;
   case Black:
-    active_color = White;break;
+    ++fullmove_number;
+    active_color = White;
+    break;
   default:
     assert(0);
   }
