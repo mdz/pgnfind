@@ -69,7 +69,7 @@ void ChessGame::make_move( const ChessMove &move ) {
        && ( end_y == 1 || end_y == 8 )
        && ( end_x == 7 || end_x == 2 ) ) {
     int old_rook_square, new_rook_square;
-    if ( move.get_end_x() == 7 ) {
+    if ( end_x == 7 ) {
       old_rook_square = 8;
       new_rook_square = 6;
     } else { // end_x == 2
@@ -78,11 +78,17 @@ void ChessGame::make_move( const ChessMove &move ) {
     }
     int y = move.get_end_y();
 
-    position.set_piece_at( new_rook_square, y,
-			   position.get_piece_at( old_rook_square, y ) );
-    position.set_piece_at( old_rook_square, y,
+    position.set_piece_at( new_rook_square, end_y,
+			   position.get_piece_at( old_rook_square, end_y ) );
+    position.set_piece_at( old_rook_square, end_y,
 			   ChessPiece( ChessPiece::Empty ) );
   }
+
+  // Handle pawn promotion (change the recently placed pawn into
+  // another piece)
+  if ( piece.get_type() == ChessPiece::Pawn
+       && move.get_promote() != ChessPiece::Empty )
+    position.set_piece_at( end_x, end_y, move.get_promote() );
 
   // Set new en passant, castling info
   position.set_en_passant( move.get_en_passant_x(),
