@@ -39,8 +39,8 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
   en_passant_x = 0;
   en_passant_y = 0;
   castling = game->current_position().get_castling( pos_color );
+  halfmove_clock = game->current_position().get_halfmove_clock() + 1;
 						  
-
   if ( format == Algebraic ) {
     assert( game != NULL ); // Programmatic error
 
@@ -57,15 +57,15 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
       throw InvalidMove;
 
 //      cout << "Parsed move:" << endl
-//  	 << "piece: " << move->piece << endl
+//  	 << "piece: " << (int)move->piece << endl
 //  	 << "clarifier.rank: " << move->clarifier.rank << endl
 //  	 << "clarifier.file: " << move->clarifier.file << endl
 //  	 << "square.rank: " << move->square.rank << endl
 //  	 << "square.file: " << move->square.file << endl
 //  	 << "capture: " << move->capture << endl
 //  	 << "check: " << move->check << endl
-//  	 << "promote: " << move->promote << endl
-//  	 << "castling: " << move->castling << endl
+//  	 << "promote: " << (int)move->promote << endl
+//  	 << "castling: " << (int)move->castling << endl
 //  	 << endl
 //  	 << "Deduced: " << endl;
       
@@ -86,7 +86,7 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
       throw InvalidMove;
     }
     
-    // Trust no one...not even the parser.
+    // Sanity checks...trust no one...not even the parser.
 
     if ( !move->castling )
       if ( move->square.file >= 1 && move->square.file <= 8  )
@@ -100,11 +100,8 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
       else 
 	throw InvalidMove;
 
-	
-    //
-    // Determine start square and color
-    //
 
+    // Check active color
     assert( pos_color == ChessPosition::White || pos_color == ChessPosition::Black );
 
     ChessPiece::Color piece_color =
@@ -114,16 +111,31 @@ ChessMove::ChessMove( const char *data, ChessMove::MoveFormat format,
 
     // Make sure we're not trying to capture our own piece, or make a
     // null move
-    piece = game->current_position().get_piece_at( end_x, end_y );
-    if ( piece.get_type() != ChessPiece::Empty &&
-	 piece.get_color() == piece_color )
-      throw InvalidMove;
+
+    if ( !move->castling ) {
+      piece = game->current_position().get_piece_at( end_x, end_y );
+      if ( piece.get_type() != ChessPiece::Empty &&
+	   piece.get_color() == piece_color )
+	throw InvalidMove;
+    }
+
+    // Reset the halfmove clock for captures
+    if ( move->capture )
+      halfmove_clock = 0;
+
     
-    int vec, x, y;
+    //
+    // Determine start square
+    //
+
     int found = 0;
     switch ( piece_type ) {
     case ChessPiece::Pawn:
       int dir, second_rank;
+
+      // Reset the halfmove clock
+      halfmove_clock = 0;
+
       if ( pos_color == ChessPosition::White ) {
 	dir = 1;
 	second_rank = 2;

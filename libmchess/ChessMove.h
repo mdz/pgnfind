@@ -46,6 +46,11 @@ public:
   int get_en_passant_x() const { return en_passant_x; };
   int get_en_passant_y() const { return en_passant_y; };
 
+  // This will return a value suitable for
+  // ChessPosition::set_halfmove_counter indicating the proper value
+  // for the halfmove clock AFTER this move is made
+  int get_halfmove_clock() const { return halfmove_clock; };
+
   // This will return the castling status AFTER this move is made
   ChessPosition::Castling get_castling() const { return castling; };
 
@@ -76,6 +81,9 @@ protected:
 
   // Castling status AFTER this move is made
   ChessPosition::Castling castling;
+
+  // Halfmove clock AFTER this move is mode
+  int halfmove_clock;
 };
 
 #endif /* !_CHESSMOVE_H */
