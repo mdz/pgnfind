@@ -250,12 +250,12 @@ int ChessPosition::read_FEN( const char *_buf ) {
 	int count = *current -  '1' + 1;
 	x += count;
 	++current;
-	cout << "Skipping " << count << " squares" << endl;
+	//cout << "Skipping " << count << " squares" << endl;
       } else {
 	board[x][y].set( *current );
-	cout << "Got piece (" << *current << "): "
-	     << board[x][y].get_type() << ','
-	     << board[x][y].get_color() << endl;
+	//cout << "Got piece (" << *current << "): "
+	//     << board[x][y].get_type() << ','
+	//     << board[x][y].get_color() << endl;
 	++current;
 	++x;
       }
@@ -283,10 +283,8 @@ int ChessPosition::read_FEN( const char *_buf ) {
 
   if ( *current == 'w' ) {
     set_active_color( White );
-    cout << "White to move" << endl;
   } else if ( *current == 'b' ) {
     set_active_color( Black );
-    cout << "Black to move" << endl;
   } else {
     cout << "ChessPosition::read_FEN: Couldn't determine whose move it was"
 	 << endl;
