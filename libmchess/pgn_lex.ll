@@ -102,11 +102,20 @@ ws [ \t\n]
 digit [0-9]
 number {digit}+
 alg_move [NBRQKa-hO][^ \t\n]+
+gameinfo \[[^\]]*\]
+comment \{[^\}]*\}
+result 1-0|0-1|1\/2-1\/2
 other .
 
 %%
 
 {ws} // skip whitespace
+
+{comment} // discard comments
+
+{gameinfo} // discard game info
+
+{result} // discard result
 
 {number} yylval.num = atoi(yytext); return NUM;
 
