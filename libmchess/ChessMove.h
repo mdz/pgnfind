@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 #include "ChessGame.h"
-#include "alg_parse.h"
+#include "alg_parse_int.h"
 
 struct boardvec {
   int x;
@@ -40,6 +40,15 @@ public:
   int get_end_x() const   { return end_x; };
   int get_end_y() const   { return end_y; };
 
+  // These will return values suitable for
+  // ChessPosition::set_en_passant indicating the en passant capture
+  // square AFTER this move is made
+  int get_en_passant_x() const { return en_passant_x; };
+  int get_en_passant_y() const { return en_passant_y; };
+
+  // This will return the castling status AFTER this move is made
+  ChessPosition::Castling get_castling() const { return castling; };
+
   //
   // Protected methods
   //
@@ -60,6 +69,13 @@ protected:
   int start_y;
   int end_x;
   int end_y;
+
+  // En passant capture square AFTER this move is made
+  int en_passant_x;
+  int en_passant_y;
+
+  // Castling status AFTER this move is made
+  ChessPosition::Castling castling;
 };
 
 #endif /* !_CHESSMOVE_H */
