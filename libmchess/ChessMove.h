@@ -35,10 +35,10 @@ public:
   //
 public:
   // These are guaranteed to return values in the range [1,8]
-  int get_start_x();
-  int get_start_y();
-  int get_end_x();
-  int get_end_y();
+  int get_start_x() const;
+  int get_start_y() const;
+  int get_end_x() const;
+  int get_end_y() const;
 
   //
   // Protected methods
