@@ -22,7 +22,7 @@ public:
   // ChessGame object must be passed for Algebraic format, as data
   // from the board is required to determine the correct move
   ChessMove( const char *data , MoveFormat format,
-	     const ChessGame *game = NULL );
+	     const class ChessGame *game = NULL );
 
   //
   // Accessors
