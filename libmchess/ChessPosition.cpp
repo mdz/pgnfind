@@ -404,11 +404,11 @@ int ChessPosition::find_piece( ChessPiece piece,
 			       int start_x, int start_y,
 			       int file,
 			       int rank,
-			       const struct boardvec *vectors,
+			       const ChessVector *vectors,
 			       unsigned int numvec,
 			       int unique,
 			       int *found_x,
-			       int *found_y) const {
+			       int *found_y ) const {
   int x, y;
   unsigned int vec, len;
   int found = 0;
@@ -439,8 +439,11 @@ int ChessPosition::find_piece( ChessPiece piece,
       ChessPiece found_piece = get_piece_at( x, y );
       if ( found_piece == piece ) {
 
-	*found_x = x;
-	*found_y = y;
+	if ( found_x != NULL )
+	  *found_x = x;
+
+	if ( found_y != NULL )
+	  *found_y = y;
 
 	if ( unique ) {
 
@@ -461,4 +464,74 @@ int ChessPosition::find_piece( ChessPiece piece,
   }
 
   return found;
+}
+
+int ChessPosition::is_attacked( const char *square, Color color ) const {
+  return is_attacked( square_x( square ), square_y( square ), color );
+}
+
+int ChessPosition::is_attacked( int x, int y, Color color ) const {
+  ChessPiece::Color piece_color = ( color == White ) ?
+    ChessPiece::White : ChessPiece::Black;
+
+  // Start with piece attacks
+  int attacked = ( find_piece( ChessPiece( ChessPiece::Bishop, piece_color ),
+			       x, y, 0, 0,
+			       bishop_vectors, num_bishop_vectors,
+			       0, NULL, NULL) ||
+		   find_piece( ChessPiece( ChessPiece::Knight, piece_color ),
+			       x, y, 0, 0,
+			       knight_vectors, num_knight_vectors,
+			       0, NULL, NULL ) ||
+		   find_piece( ChessPiece( ChessPiece::Rook, piece_color ),
+			       x, y, 0, 0,
+			       rook_vectors, num_rook_vectors,
+			       0, NULL, NULL ) ||
+		   find_piece( ChessPiece( ChessPiece::Queen, piece_color ),
+			       x, y, 0, 0,
+			       queen_vectors, num_queen_vectors,
+			       0, NULL, NULL ) ||
+		   find_piece( ChessPiece( ChessPiece::King, piece_color ),
+			       x, y, 9, 9,
+			       king_vectors, num_king_vectors,
+			       0, NULL, NULL ) );
+
+  if ( !attacked )
+    // Try pawn attacks
+    if ( color == White )
+      attacked = find_piece( ChessPiece( ChessPiece::Pawn, piece_color ),
+			     x, y, 0, 0,
+			     white_pawn_vectors, num_white_pawn_vectors,
+			     0, NULL, NULL );
+    else
+      attacked = find_piece( ChessPiece( ChessPiece::Pawn, piece_color ),
+			     x, y, 0, 0,
+			     black_pawn_vectors, num_black_pawn_vectors,
+			     0, NULL, NULL );
+
+  return attacked;
+}
+
+int ChessPosition::in_check( Color color ) const {
+  ChessPiece::Color piece_color = ( color == White ) ?
+    ChessPiece::White : ChessPiece::Black;
+  Color opponent_color = ( color == Black ) ?
+    White : Black;
+
+  //
+  // Find the king
+  //
+  int king_x, king_y;
+  int found = 0;
+
+  for( king_x = 1 ; king_x <= 8 && !found ; ++king_x )
+    for( king_y = 1 ; king_y <= 8 && !found ; ++king_y )
+      if ( get_piece_at( king_x, king_y ) ==
+	   ChessPiece( ChessPiece::King, piece_color ) )
+	found = 1;
+
+  if ( !found ) // No king!
+    throw InvalidPosition;
+
+  return is_attacked( king_x, king_y, opponent_color );
 }
