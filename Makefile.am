@@ -1,0 +1,1 @@
+SUBDIRS = libmchess src
