@@ -5,4 +5,3 @@ pgnfind_DEPENDENCIES = ../libmchess/libmchess.a
 
 INCLUDES = -I$(top_srcdir)/libmchess
 LIBS += -L../libmchess
-CXXFLAGS += -fhandle-exceptions
